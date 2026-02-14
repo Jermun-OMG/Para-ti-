@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Para Ti</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #d4145a;
+            --secondary: #fbb03b;
+            --bg-deep: #2c0010;
+            --bg-light: #590025;
+            --paper: #fffcf5;
+            --text: #4a2c2c;
+            --gold: #d4af37;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-deep), var(--bg-light));
+            font-family: 'Cormorant Garamond', serif;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- FONDO ANIMADO --- */
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* --- SECCIÓN 1: INTRODUCCIÓN --- */
+        .screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+            padding: 20px;
+        }
+
+        .title-container {
+            text-align: center;
+            opacity: 0;
+            animation: fadeInUp 2s ease forwards 0.5s;
+        }
+
+        h1 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 4rem;
+            background: linear-gradient(to right, #ffecd2 0%, #fcb69f 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            color: rgba(255,255,255,0.8);
+            text-transform: uppercase;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0.7;
+            animation: bounce 2s infinite;
+        }
+
+        .scroll-indicator span {
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        .arrow {
+            width: 15px;
+            height: 15px;
+            border-bottom: 2px solid white;
+            border-right: 2px solid white;
+            transform: rotate(45deg);
+        }
+
+        /* --- JARDÍN (Elementos CSS) --- */
+        .garden-container {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* --- SECCIÓN 2: EL SOBRE --- */
+        .envelope-area {
+            perspective: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .envelope-wrapper {
+            width: 300px;
+            height: 200px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.5s ease;
+        }
+
+        .envelope-wrapper:hover {
+            transform: scale(1.02);
+        }
+
+        .envelope {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #b0413e;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            border-radius: 5px;
+            z-index: 5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .wax-seal {
+            width: 40px;
+            height: 40px;
+            background: #d4af37;
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3), 0 4px 10px rgba(0,0,0,0.3);
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            color: #5e4b1a;
+            font-family: 'Great Vibes', cursive;
+        }
+
+        .instruction-text {
+            margin-top: 30px;
+            font-size: 1rem;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 1px;
+        }
+
+        /* --- LA CARTA (Modal Overlay) --- */
+        .letter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+
+        .letter-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .paper {
+            width: 85%;
+            max-width: 600px;
+            max-height: 85vh;
+            background: var(--paper);
+            color: var(--text);
+            padding: 40px 30px;
+            border-radius: 2px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            overflow-y: auto;
+            transform: translateY(50px) scale(0.9);
+            transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+            position: relative;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23d4145a' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        .letter-overlay.active .paper {
+            transform: translateY(0) scale(1);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #aaa;
+            line-height: 1;
+        }
+
+        /* --- CONTENIDO DE LA CARTA --- */
+        .paper-content h2 {
+            font-family: 'Great Vibes', cursive;
+            font-size: 2.5rem;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 30px;
+            line-height: 1.2;
+        }
+
+        .paper-content p {
+            font-size: 1.15rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        .paper-content .highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .paper-content .signature {
+            font-family: 'Great Vibes', cursive;
+            font-size: 2rem;
+            text-align: right;
+            margin-top: 40px;
+            color: var(--gold);
+        }
+
+        /* --- FOOTER DEMONIOS --- */
+        .footer-demon {
+            margin-top: 50px;
+            text-align: center;
+            padding-bottom: 20px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding-top: 20px;
+        }
+
+        .demon-icons {
+            font-size: 1.5rem;
+            letter-spacing: 10px;
+            margin-top: 10px;
+            display: block;
+        }
+
+        /* --- ANIMACIONES --- */
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(20px); }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+
+        @keyframes flowerSway {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(5deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* Flores CSS simples */
+        .flower {
+            position: absolute;
+            bottom: -10px;
+            transform-origin: bottom center;
+            animation: flowerSway 4s ease-in-out infinite;
+        }
+        .flower-head {
+            width: 30px;
+            height: 30px;
+            background: #ff4d6d;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
+        }
+        .flower-stem {
+            width: 4px;
+            height: 60px;
+            background: #2d6a4f;
+            margin: 0 auto;
+            margin-top: -5px;
+            position: relative;
+            z-index: -1;
+        }
+        .flower-leaf {
+            position: absolute;
+            width: 15px;
+            height: 8px;
+            background: #40916c;
+            border-radius: 10px 0;
+            top: 20px;
+            left: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas-bg"></canvas>
+
+    <section class="screen">
+        <div class="title-container">
+            <h1>Para una Persona<br>Muy Especial</h1>
+            <p class="subtitle">Desliza para descubrir</p>
+        </div>
+        
+        <div class="garden-container" id="garden">
+            </div>
+
+        <div class="scroll-indicator">
+            <span>Abrir</span>
+            <div class="arrow"></div>
+        </div>
+    </section>
+
+    <section class="screen envelope-area">
+        <div class="envelope-wrapper" onclick="openLetter()">
+            <div class="envelope">
+                <div class="wax-seal">J</div>
+            </div>
+        </div>
+        <p class="instruction-text">Toca el sobre para abrir</p>
+    </section>
+
+    <div class="letter-overlay" id="letterOverlay">
+        <div class="paper">
+            <div class="close-btn" onclick="closeLetter()">×</div>
+            <div class="paper-content">
+                <h2>Querida...</h2>
+                
+                <p>Hoy es el Día del Amor y la Amistad… y me pareció imposible no escribirte.</p>
+
+                <p>Hay personas que llegan y se quedan en un lugar difícil de explicar. No sé exactamente en qué parte del corazón poner lo que somos… <span class="highlight">pero sí sé que ocupas un espacio que no cualquiera tiene.</span></p>
+
+                <p>Me gusta lo que compartimos. Las conversaciones que fluyen sin esfuerzo. Las sonrisas que aparecen sin que nadie las fuerce. Esa complicidad que a veces parece decir más de lo que realmente decimos.</p>
+
+                <p>Tal vez lo nuestro no necesite definirse. Tal vez sea de esas cosas que simplemente se sienten… y eso ya lo hace especial.</p>
+
+                <p>Hoy quería recordarte que, de una forma u otra, eres importante para mí. Y que me alegra que coincidamos en este momento de nuestras vidas.</p>
+
+                <p class="signature">Feliz Día del Amor y la Amistad.</p>
+
+                <div class="footer-demon">
+                    <small>Con amor y amistad, creada por Alguien que te quiere </small>
+                    <span class="demon-icons">✨❤️🔥🔮</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. JARDÍN GENERATIVO ---
+        const garden = document.getElementById('garden');
+        const colors = ['#ff4d6d', '#ff758f', '#c9184a', '#ffb3c1'];
+
+        for(let i=0; i<25; i++) {
+            const flower = document.createElement('div');
+            flower.classList.add('flower');
+            
+            // Posición aleatoria
+            flower.style.left = Math.random() * 100 + '%';
+            // Tamaño aleatorio para profundidad
+            const scale = Math.random() * 0.5 + 0.5;
+            flower.style.transform = `scale(${scale})`;
+            // Retraso de animación para que no se muevan igual
+            flower.style.animationDelay = Math.random() * 2 + 's';
+
+            const head = document.createElement('div');
+            head.classList.add('flower-head');
+            head.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            const stem = document.createElement('div');
+            stem.classList.add('flower-stem');
+            stem.style.height = (Math.random() * 40 + 40) + 'px'; // Altura variable
+
+            if(Math.random() > 0.5) {
+                const leaf = document.createElement('div');
+                leaf.classList.add('flower-leaf');
+                stem.appendChild(leaf);
+            }
+
+            flower.appendChild(head);
+            flower.appendChild(stem);
+            garden.appendChild(flower);
+        }
+
+        // --- 2. SISTEMA DE PARTÍCULAS (LLUVIA Y LUCES) ---
+        const canvas = document.getElementById('canvas-bg');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 3;
+                this.speedY = Math.random() * 1 + 0.5;
+                this.color = `rgba(255, 255, 255, ${Math.random() * 0.5})`;
+                this.sway = Math.random() * 0.02; 
+                this.angle = Math.random() * Math.PI * 2;
+            }
+
+            update() {
+                this.y -= this.speedY; // Flotan hacia arriba como luces
+                this.x += Math.sin(this.angle) * 0.5;
+                this.angle += this.sway;
+                
+                if (this.y < 0) {
+                    this.y = height;
+                    this.x = Math.random() * width;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 50; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        // --- 3. LÓGICA DE APERTURA ---
+        function openLetter() {
+            const overlay = document.getElementById('letterOverlay');
+            overlay.classList.add('active');
+            
+            // Efecto de sonido opcional, si quisieras añadirlo después
+            // playSound();
+        }
+
+        function closeLetter() {
+            const overlay = document.getElementById('letterOverlay');
+            overlay.classList.remove('active');
+        }
+    </script>
+</body>
+  </html>
+  
